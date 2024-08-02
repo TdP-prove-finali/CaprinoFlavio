@@ -31,10 +31,17 @@ class Controller:
         if self._view._txtSPeso.value is None or self._view._txtSPeso.value.strip() == "":
             soglia = 0
         else:
+            try: float(self._view._txtSPeso.value)
+            except ValueError:
+                if ',' in self._view._txtSPeso.value:
+                    self._view.create_alert("Il valore decimale richiede il punto")
+                    return
+                self._view.create_alert("Inserisci un valore numerico per la soglia")
+                return
             soglia = self._view._txtSPeso.value
 
         zona = self.convertiZona(self._view._ddLuogo.value)
-        self._model.creaGrafo(zona,mese,int(soglia))
+        self._model.creaGrafo(zona,mese,float(soglia))
         self._view._txtResult1.controls.append(ft.Text(f"Grafo creato con nodi e archi {self._model.stampaGrafo()}"))
         self._view._btnTempo.disabled= False
         self._view._btnStaz.disabled= False
@@ -47,21 +54,26 @@ class Controller:
         self._view._btnDensita.disabled= False
         self._view._ddClass.options = []
         self._view._ddMag.options = []
+
         for i in range(len(self._model._grafo.nodes)):
             if i >1: # una classifica almeno 3
                 self._view._ddClass.options.append(ft.dropdown.Option(str(i+1)))
-
 
         self._listmag = [t.mag for t in self._model._grafo.nodes]
         self._listmag = sorted(set(self._listmag))
         for m in self._listmag:
             self._view._ddMag.options.append(ft.dropdown.Option(str(m)))
+
         self._view.update_page()
         pass
 
     def handle_tempo(self,e):
         self._view._txtResult2.controls.append(ft.Text(f"-> Analisi temporale:"))
         distanza, frequenza = self._model.analisiTemporale(self._view._ddMese.value)
+        if frequenza==0:
+            self._view._txtResult2.controls.append(ft.Text(f"Non sono avvenuti terremoti in questo periodo nella zona selezionata"))
+            self._view.update_page()
+            return
         self._view._txtResult2.controls.append(ft.Text(f"Nel mese di {self._view._ddMese.value} nella zona {self._view._ddLuogo.value} si è verificato 1 terremoto ogni {round(distanza, 2)} giorni a distanza media di {round(frequenza, 2)} ore"))
         self._view._txtResult2.controls.append(ft.Text(f""))
         self._view.update_page()
@@ -70,6 +82,8 @@ class Controller:
     def handle_stazioni(self,e):
         self._view._txtResult2.controls.append(ft.Text(f"-> Analisi stazioni installate:"))
         lista = self._model.analisiStazioni()
+        if self.nonPossoAnalizzare(lista):
+            return
         for l in lista:
             self._view._txtResult2.controls.append(ft.Text(f"Terremoto a {l[0]} rilevato da {int(l[1])} stazioni"))
         self._view._txtResult2.controls.append(ft.Text(f""))
@@ -79,6 +93,8 @@ class Controller:
     def handle_errori(self,e):
         self._view._txtResult2.controls.append(ft.Text(f"-> Analisi efficacia stazioni:"))
         listah, listad, listam = self._model.analisiErrori()
+        if self.nonPossoAnalizzare(listah):
+            return
 
         self._view._txtResult2.controls.append(ft.Text(f"-> Horizontal error:"))
         for l in listah:
@@ -100,6 +116,9 @@ class Controller:
 
         self._view._txtResult2.controls.append(ft.Text(f"-> Ricerca luoghi in cui sono avvenuti terremoti con magnitudo vicina a {self._view._ddMag.value}"))
         lista = self._model.trovaMagnitudo(float(self._view._ddMag.value))
+        if self.nonPossoAnalizzare(lista):
+            return
+
         for l in lista:
             self._view._txtResult2.controls.append(ft.Text(f"Terremoto a {l[0]} con magnitudo: {l[1]}"))
 
@@ -112,8 +131,11 @@ class Controller:
             self._view.create_alert("Inserisci la lunghezza della classifica")
             return
 
-        self._view._txtResult2.controls.append(ft.Text(f"-> Classifica dei {self._view._ddClass.value} terremoti più forti"))
         lista = self._model.trovaClassifica()
+        if self.nonPossoAnalizzare(lista):
+            return
+
+        self._view._txtResult2.controls.append(ft.Text(f"-> Classifica dei {self._view._ddClass.value} terremoti più forti"))
         num = int(self._view._ddClass.value)
 
         for l in lista[:num]:
@@ -125,8 +147,15 @@ class Controller:
         self._view._txtResult2.controls.append(ft.Text(f""))
         self._view.update_page()
 
+    def handle_clear(self,e):
+        self._view._txtResult2.controls = None
+        self._view._txtResult3.controls = None
+        self._view.update_page()
+
     def handle_densita(self,e):
         #manca controllo se int la soglia grafo
+        #manca errore zero nodi per analisi diversi senza funzione
+        #pressione bottone magnitudo se non ho nodi stampa errori diversi da "inserisci valore", ma "errore di nodi mancanti"
         #controllo luogo
         pass
 
@@ -161,3 +190,10 @@ class Controller:
         if value is None:
             return
         return f"%{value}%"
+
+    def nonPossoAnalizzare(self, lista):
+        if len(lista)==0:
+            self._view._txtResult2.controls.append(ft.Text(f"La regione selezionata non ha terremoti da analizzare"))
+            self._view.update_page()
+            return True
+        return False

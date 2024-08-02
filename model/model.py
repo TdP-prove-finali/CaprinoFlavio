@@ -28,6 +28,9 @@ class Model:
                         self._grafo.add_edge(n1,n2,weight=km)
 
     def analisiTemporale(self,mese):
+        if len(self._grafo.nodes) == 0:
+            return 0,0 #torno lista vuota cosi uso il metodo di tutti gli altri
+
         giorni = self.contaGiorni(mese)
         self._terremotiTemp = []
         for t in self._grafo.nodes:

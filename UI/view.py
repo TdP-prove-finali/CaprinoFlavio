@@ -61,7 +61,8 @@ class View(ft.UserControl):
         self._btnTempo = ft.ElevatedButton("Analisi Temporale", disabled = True, on_click=self._controller.handle_tempo)
         self._btnStaz = ft.ElevatedButton("Analisi Stazioni", disabled = True, on_click=self._controller.handle_stazioni)
         self._btnErr = ft.ElevatedButton("Analisi Errori", disabled = True, on_click=self._controller.handle_errori)
-        row4 = ft.Row([self._btnTempo, self._btnStaz, self._btnErr], alignment=ft.MainAxisAlignment.CENTER)
+        self._btnClear = ft.ElevatedButton(text="Cancella Output", color= "red", on_click=self._controller.handle_clear)
+        row4 = ft.Row([self._btnTempo, self._btnStaz, self._btnErr, self._btnClear], alignment=ft.MainAxisAlignment.CENTER)
 
         self._btnMag = ft.ElevatedButton("Analisi Magnitudo", disabled = True, on_click=self._controller.handle_mag)
         self._ddMag = ft.Dropdown(label="Magnitudo", width=150,disabled = True)
