@@ -126,6 +126,8 @@ class Controller:
         self._view.update_page()
 
     def handle_densita(self,e):
+        #manca controllo se int la soglia grafo
+        #controllo luogo
         pass
 
     def convertiData(self, param):
