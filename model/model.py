@@ -14,23 +14,32 @@ class Model:
     def creaGrafo(self,zona,mese,soglia):
         self._grafo.clear()
         if zona is None or zona.strip() == "":
-            self._terremoti = DAO.getTerremoti(mese) #inutilizzabile
+            self._terremoti = DAO.getTerremoti(mese)
         else:
             self._terremoti = DAO.getTerremotiZona(zona,mese)
 
         self._grafo.add_nodes_from(self._terremoti)
         print(len(self._grafo.nodes))
-        for n1 in self._grafo.nodes:
-            for n2 in self._grafo.nodes:
-                if n1.id > n2.id:
-                    km = self.calcolaDistanza(n1,n2)
-                    if km <= soglia:
-                        self._grafo.add_edge(n1,n2,weight=km)
+        nodi = list(self._grafo.nodes)
+        num_nodi = len(nodi)
 
-    def analisiTemporale(self,mese):
+        for i in range(num_nodi):
+            n1 = nodi[i]
+            for j in range(i + 1, num_nodi):
+                n2 = nodi[j]
+                km = geodesic((n1.latitude, n1.longitude), (n2.latitude, n2.longitude)).kilometers
+                if km <= soglia:
+                    self._grafo.add_edge(n1, n2, weight=km)
+
+    def analisiTemporale(self,mese,diz):
         if len(self._grafo.nodes) == 0:
-            return 0,0 #torno lista vuota cosi uso il metodo di tutti gli altri
+            return 0,0
+        if diz == {}:
+            return self.analisiZonaSingola(mese)
+        else:
+            return self.analisiZone(diz,mese)
 
+    def analisiZonaSingola(self,mese):
         giorni = self.contaGiorni(mese)
         self._terremotiTemp = []
         for t in self._grafo.nodes:
@@ -38,7 +47,13 @@ class Model:
         self._terremotiTemp = sorted(self._terremotiTemp)
         differenze = [self._terremotiTemp[i] - self._terremotiTemp[i - 1] for i in range(1, len(self._terremotiTemp))]
         media_differenze = sum(differenze) / len(differenze)
-        return media_differenze, giorni*24/len(differenze)
+        return media_differenze, giorni * 24 / len(differenze)
+
+    def analisiZone(self,diz,mese):
+        pass
+        # for key in diz
+        #
+
 
     def analisiStazioni(self):
         self._terremotiStaz = []
@@ -92,13 +107,26 @@ class Model:
         self._terremotiClassifica.sort(key=lambda x: x[1], reverse=True)
         return self._terremotiClassifica
 
+    def trovaDensita(self,sr):
+        risultati = {}
+        for nodo_sorgente in self._grafo.nodes:
+            self._sol = set()
+            parziale = set()
+            self.ricorsione(nodo_sorgente, sr, parziale)
+            risultati[nodo_sorgente.place] = len(self._sol)/((sr**2)*3.14)
+        return dict(sorted(risultati.items(), key=lambda item: item[1], reverse=True))
+
+    def ricorsione(self, nodo_sorgente, soglia_ricorsione, parziale):
+        for nodo in self._grafo.nodes:
+            if nodo not in parziale:
+                distanza = geodesic((nodo_sorgente.latitude, nodo_sorgente.longitude), (nodo.latitude, nodo.longitude)).kilometers
+                if distanza <= soglia_ricorsione:
+                    parziale.add(nodo)
+                    self.ricorsione(nodo, soglia_ricorsione, parziale)
+        self._sol = copy.deepcopy(parziale)
+
     def stampaGrafo(self):
         return (len(self._grafo.nodes()), len(self._grafo.edges()))
-
-    def calcolaDistanza(self, n1, n2):
-        punto1 = (n1.latitude, n1.longitude)
-        punto2 = (n2.latitude, n2.longitude)
-        return geodesic(punto1, punto2).kilometers
 
     def contaGiorni(self, mese):
         if mese =="Novembre" or mese =="Aprile" or mese == "Giugno" or mese == "Settembre":
@@ -107,3 +135,6 @@ class Model:
             return 28
         else:
             return 31
+
+    def clearGraph(self):
+        self._grafo.clear()

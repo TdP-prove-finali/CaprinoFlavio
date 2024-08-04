@@ -47,7 +47,9 @@ class View(ft.UserControl):
         row1 = ft.Row([self._txtSPeso, self._ddMese, self._ddLuogo], alignment=ft.MainAxisAlignment.CENTER)
 
         self._btnGraph = ft.ElevatedButton(text="Crea Grafo", on_click=self._controller.handle_graph)
-        row2 = ft.Row([self._btnGraph], alignment=ft.MainAxisAlignment.CENTER)
+        self._btnSelect = ft.ElevatedButton(text="Cancella Selezione", color= "red", on_click=self._controller.handle_select)
+
+        row2 = ft.Row([self._btnGraph, self._btnSelect], alignment=ft.MainAxisAlignment.CENTER)
 
         self._txtResult1 = ft.ListView(expand=0, spacing=10, padding=20, height=40, auto_scroll=True)
 
@@ -82,7 +84,7 @@ class View(ft.UserControl):
         self._btnDensita = ft.ElevatedButton("Analisi Densità", on_click=self._controller.handle_densita,disabled = True)
         row7 = ft.Row([self._txtSRicorsione, self._btnDensita], alignment=ft.MainAxisAlignment.CENTER)
 
-        self._txtResult3 = ft.ListView(expand=0, spacing=10, padding=20, height=400, auto_scroll=True)
+        self._txtResult3 = ft.ListView(expand=0, spacing=10, padding=20, height=300, auto_scroll=True)
         row8 = ft.Row([self._txtResult3], alignment=ft.MainAxisAlignment.CENTER)
 
         container3 = ft.Container(content=ft.Column([row7, row8], spacing=10))
