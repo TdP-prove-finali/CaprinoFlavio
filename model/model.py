@@ -52,15 +52,13 @@ class Model:
     def analisiZone(self,diz,mese):
         pass
         # for key in diz
-        #
+        # aggiungere se place assente dal database
 
 
     def analisiStazioni(self):
         self._terremotiStaz = []
         for t in self._grafo.nodes:
-            if t.nst is None:
-                self._terremotiStaz.append((t.place, 0))
-            else:
+            if t.nst is not None:
                 self._terremotiStaz.append((t.place, t.nst))
 
         self._terremotiStaz.sort(key=lambda x: x[1])
@@ -96,14 +94,16 @@ class Model:
     def trovaMagnitudo(self,sm):
         self._terremotiMag = []
         for n in self._grafo.nodes:
-            if n.mag <= (sm+0.5) and n.mag >= (sm-0.5):
-                self._terremotiMag.append((n.place, n.mag))
+            if n.place is not None:
+                if n.mag <= (sm+0.5) and n.mag >= (sm-0.5):
+                    self._terremotiMag.append((n.place, n.mag))
         return self._terremotiMag
 
     def trovaClassifica(self):
         self._terremotiClassifica = []
         for n in self._grafo.nodes:
-            self._terremotiClassifica.append((n.place,n.mag))
+            if n.place is not None:
+                self._terremotiClassifica.append((n.place,n.mag))
         self._terremotiClassifica.sort(key=lambda x: x[1], reverse=True)
         return self._terremotiClassifica
 
@@ -113,7 +113,7 @@ class Model:
             self._sol = set()
             parziale = set()
             self.ricorsione(nodo_sorgente, sr, parziale)
-            risultati[nodo_sorgente.place] = len(self._sol)/((sr**2)*3.14)
+            risultati[nodo_sorgente.place] = len(self._sol)
         return dict(sorted(risultati.items(), key=lambda item: item[1], reverse=True))
 
     def ricorsione(self, nodo_sorgente, soglia_ricorsione, parziale):

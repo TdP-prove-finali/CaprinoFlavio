@@ -25,9 +25,7 @@ class Controller:
         pass
 
     def handle_select(self,e):
-        if self._view._txtSPeso.value == "" and self._view._ddMese.value == None and self._view._ddLuogo.value == None:
-            self._view.create_alert(f"I campi di input sono vuoti")
-            return
+        self._view._txtResult1.controls = None
         self._view._txtSPeso.value = ""
         self._view._ddMese.value = None
         self._view._ddLuogo.value = None
@@ -45,11 +43,24 @@ class Controller:
         self._view._ddMag.options = []
         self._view.update_page()
 
+    # def handle_choose(self,e):
+    #     dizScelta = {}
+    #     for z in self._luoghi:
+    #         dizScelta[z] = len(DAO.getTerremotiZona(self.convertiZona(z),self.convertiData(self._view._ddMese.value)))
+    #     listaFinale = sorted(dizScelta.items(), key=lambda item: item[1])
+    #     self._view._txtResult2.controls.append(ft.Text(f"-> Zone consigliate"))
+    #
+    #     for nodo, conteggio in listaFinale:
+    #         self._view._txtResult2.controls.append(ft.Text(f"{nodo} con {conteggio} terremoti"))
+    #
+    #     self._view._txtResult2.controls.append(ft.Text(f""))
+    #     self._view.update_page()
 
     def handle_graph(self, e):
         if self._view._ddMese.value is None:
             self._view.create_alert("Inserisci un mese per l'analisi")
             return
+
         mese = self.convertiData(self._view._ddMese.value)
 
         if self._view._txtSPeso.value is None or self._view._txtSPeso.value.strip() == "":
@@ -99,9 +110,9 @@ class Controller:
         pass
 
     def handle_tempo(self, e):
-        #metti a posto distanza
+        # metti a posto distanza
         distanza, frequenza = self._model.analisiTemporale(self._view._ddMese.value, self._dizionarioAnalisiTemp)
-        #distanza puo essere sia un numero che un dizionario in base all'input del Flet
+        # distanza puo essere sia un numero che un dizionario in base all'input del Flet
         if frequenza == 0:
             self._view.create_alert(f"Non sono avvenuti terremoti in questo periodo nella zona selezionata")
             return
@@ -114,10 +125,11 @@ class Controller:
         else:
             pass
             # per ogni chiave di "distanza"
-            # logica: la frequenza in cui sono avvenuti nel mondo
-            # però per ogni zona mostro i dettagli sulla distanza media tra una zona e l'altra
-            # self._view._txtResult2.controls.append(ft.Text(
-            # f"Nel mese di {self._view._ddMese.value} nella zona {CHIAVE} si è verificato 1 terremoto ogni {round(VALORE, 2)} giorni a distanza media di {round(frequenza, 2)} ore"))
+            # visualizzo la frequenza in cui sono avvenuti nel mondo
+            # e per ogni zona mostro i dettagli sulla distanza media tra una zona e
+            # l'altra self._view._txtResult2.controls.append(
+            # ft.Text( f"Nel mese di {self._view._ddMese.value} nella zona {CHIAVE} si è verificato 1 terremoto ogni
+            # {round(VALORE, 2)} giorni a distanza media di {round(frequenza, 2)} ore"))
 
         self._view._txtResult2.controls.append(ft.Text(f""))
         self._view.update_page()
@@ -159,14 +171,14 @@ class Controller:
             self._view.create_alert(f"Non sono avvenuti terremoti in questo periodo nella zona selezionata")
             return
 
-        if (self._view._ddMag.value is None):
+        if self._view._ddMag.value is None:
             self._view.create_alert("Inserisci la magnitudo")
             return
 
         self._view._txtResult2.controls.append(ft.Text(
             f"-> Ricerca luoghi in cui sono avvenuti terremoti con magnitudo vicina a {self._view._ddMag.value}"))
         lista = self._model.trovaMagnitudo(float(self._view._ddMag.value))
-
+        self._view._txtResult2.controls.append(ft.Text(f"Trovati {len(lista)} terremoti"))
         for l in lista:
             self._view._txtResult2.controls.append(ft.Text(f"Terremoto a {l[0]} con magnitudo: {l[1]}"))
 
@@ -179,7 +191,7 @@ class Controller:
             self._view.create_alert(f"Non sono avvenuti terremoti in questo periodo nella zona selezionata")
             return
 
-        if (self._view._ddClass.value is None):
+        if self._view._ddClass.value is None:
             self._view.create_alert("Inserisci la lunghezza della classifica")
             return
 
@@ -200,9 +212,6 @@ class Controller:
         self._view.update_page()
 
     def handle_clear(self, e):
-        if self._view._txtResult2.controls == None and self._view._txtResult3.controls == None:
-            self._view.create_alert(f"Gli output sono gia vuoti")
-            return
         self._view._txtResult2.controls = None
         self._view._txtResult3.controls = None
         self._view.update_page()
@@ -220,9 +229,14 @@ class Controller:
         elenco = self._model.trovaDensita(sr)
         self._view._txtResult3.controls.append(ft.Text(f"->Analisi densità nel raggio di {sr} km"))
         for nodo, conteggio in elenco.items():
-            self._view._txtResult3.controls.append(ft.Text(f"{nodo}: {round(conteggio, 4)} terremoti/km^2"))
-        self._view._txtResult3.controls.append(ft.Text(f""))
+            if conteggio == 1:
+                self._view._txtResult3.controls.append(
+                    ft.Text(f"1 terremoto intorno a {nodo} {round((conteggio) / ((sr ** 2) * 3.14), 4)} terremoti/km^2"))
+            else:
+                self._view._txtResult3.controls.append(
+                    ft.Text(f"{conteggio} terremoti intorno a {nodo} {round((conteggio) / ((sr ** 2) * 3.14), 4)} terremoti/km^2"))
 
+        self._view._txtResult3.controls.append(ft.Text(f""))
         self._view.update_page()
         pass
 
