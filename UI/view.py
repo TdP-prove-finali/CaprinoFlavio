@@ -49,8 +49,6 @@ class View(ft.UserControl):
 
         self._btnGraph = ft.ElevatedButton(text="Crea Grafo", on_click=self._controller.handle_graph)
         self._btnSelect = ft.ElevatedButton(text="Cancella Selezione", color= "red", on_click=self._controller.handle_select)
-        #self._btnChoose = ft.ElevatedButton(text="Consiglia Selezione", color= "green", on_click=self._controller.handle_choose)
-
 
         row2 = ft.Row([self._btnGraph, self._btnSelect], alignment=ft.MainAxisAlignment.CENTER)
 

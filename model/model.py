@@ -1,6 +1,6 @@
 import copy
 from datetime import datetime
-
+import time
 import networkx as nx
 from database.DAO import DAO
 from geopy.distance import geodesic
@@ -22,14 +22,23 @@ class Model:
         print(len(self._grafo.nodes))
         nodi = list(self._grafo.nodes)
         num_nodi = len(nodi)
+        start_time = time.time()  # Inizio della misurazione
 
         for i in range(num_nodi):
+            print(i)
             n1 = nodi[i]
             for j in range(i + 1, num_nodi):
                 n2 = nodi[j]
                 km = geodesic((n1.latitude, n1.longitude), (n2.latitude, n2.longitude)).kilometers
                 if km <= soglia:
                     self._grafo.add_edge(n1, n2, weight=km)
+
+        end_time = time.time()  # Fine della misurazione
+
+        elapsed_time = end_time - start_time
+        print(f"Tempo doppio unico : {elapsed_time:.2f} secondi")
+
+
 
     def analisiTemporale(self,mese,diz):
         if len(self._grafo.nodes) == 0:
@@ -50,10 +59,24 @@ class Model:
         return media_differenze, giorni * 24 / len(differenze)
 
     def analisiZone(self,diz,mese):
-        pass
-        # for key in diz
-        # aggiungere se place assente dal database
+        for key in diz:
+            self._terremotiTemp = []
+            terremoti = DAO.getTerremotiZona(self.convertiZona(key),self.convertiData(mese))
+            for t in terremoti:
+                self._terremotiTemp.append((datetime.strptime(t.time, "%Y-%m-%dT%H:%M:%S.%fZ")).day)
+            self._terremotiTemp = sorted(self._terremotiTemp)
+            if len(self._terremotiTemp) > 1:
+                differenze = [self._terremotiTemp[i] - self._terremotiTemp[i - 1] for i in range(1, len(self._terremotiTemp))]
+                media_differenze = sum(differenze) / len(differenze)
+            else:
+                if len(self._terremotiTemp)==1:
+                    media_differenze = -1
+                else:
+                    media_differenze = 0
 
+            diz[key] = media_differenze
+        giorni = self.contaGiorni(mese)
+        return diz, giorni*24/(len(self._grafo.nodes)-1)
 
     def analisiStazioni(self):
         self._terremotiStaz = []
@@ -94,9 +117,12 @@ class Model:
     def trovaMagnitudo(self,sm):
         self._terremotiMag = []
         for n in self._grafo.nodes:
-            if n.place is not None:
-                if n.mag <= (sm+0.5) and n.mag >= (sm-0.5):
+            if n.mag <= (sm+0.5) and n.mag >= (sm-0.5):
+                if n.place is not None:
                     self._terremotiMag.append((n.place, n.mag))
+                else:
+                    self._terremotiMag.append(("Zona non registrata", n.mag))
+
         return self._terremotiMag
 
     def trovaClassifica(self):
@@ -135,6 +161,38 @@ class Model:
             return 28
         else:
             return 31
+
+    def convertiData(self, param):
+        if param == "Gennaio":
+            return "2023-01%"
+        elif param == "Febbraio":
+            return "2023-02%"
+        elif param == "Marzo":
+            return "2023-03%"
+        elif param == "Aprile":
+            return "2023-04%"
+        elif param == "Maggio":
+            return "2023-05%"
+        elif param == "Giugno":
+            return "2023-06%"
+        elif param == "Luglio":
+            return "2023-07%"
+        elif param == "Agosto":
+            return "2023-08%"
+        elif param == "Settembre":
+            return "2023-09%"
+        elif param == "Ottobre":
+            return "2023-10%"
+        elif param == "Novembre":
+            return "2023-11%"
+        elif param == "Dicembre":
+            return "2023-12%"
+        pass
+
+    def convertiZona(self, value):
+        if value is None:
+            return
+        return f"%{value}%"
 
     def clearGraph(self):
         self._grafo.clear()

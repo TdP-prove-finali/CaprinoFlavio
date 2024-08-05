@@ -24,7 +24,7 @@ class Controller:
             self._view._ddMese.options.append(ft.dropdown.Option(mesi[i]))
         pass
 
-    def handle_select(self,e):
+    def handle_select(self, e):
         self._view._txtResult1.controls = None
         self._view._txtSPeso.value = ""
         self._view._ddMese.value = None
@@ -42,19 +42,6 @@ class Controller:
         self._view._ddClass.options = []
         self._view._ddMag.options = []
         self._view.update_page()
-
-    # def handle_choose(self,e):
-    #     dizScelta = {}
-    #     for z in self._luoghi:
-    #         dizScelta[z] = len(DAO.getTerremotiZona(self.convertiZona(z),self.convertiData(self._view._ddMese.value)))
-    #     listaFinale = sorted(dizScelta.items(), key=lambda item: item[1])
-    #     self._view._txtResult2.controls.append(ft.Text(f"-> Zone consigliate"))
-    #
-    #     for nodo, conteggio in listaFinale:
-    #         self._view._txtResult2.controls.append(ft.Text(f"{nodo} con {conteggio} terremoti"))
-    #
-    #     self._view._txtResult2.controls.append(ft.Text(f""))
-    #     self._view.update_page()
 
     def handle_graph(self, e):
         if self._view._ddMese.value is None:
@@ -77,14 +64,17 @@ class Controller:
             soglia = self._view._txtSPeso.value
 
         zona = self.convertiZona(self._view._ddLuogo.value)
+        self._dizionarioAnalisiTemp = {}
         if zona is None:
             self._dizionarioAnalisiTemp = {item: None for item in self._luoghi}
         self._model.creaGrafo(zona, mese, float(soglia))
-        n,e = self._model.stampaGrafo()
+        n, e = self._model.stampaGrafo()
         if zona is None:
-            self._view._txtResult1.controls.append(ft.Text(f"Rilevati {n} terremoti con {e} connessioni nel mondo nel mese di {self._view._ddMese.value}"))
-
-        self._view._txtResult1.controls.append(ft.Text(f"Rilevati {n} terremoti con {e} connessioni nella regione {self._view._ddLuogo.value} nel mese di {self._view._ddMese.value}"))
+            self._view._txtResult1.controls.append(
+                ft.Text(f"Rilevati {n} terremoti con {e} connessioni nel mondo nel mese di {self._view._ddMese.value}"))
+        else:
+            self._view._txtResult1.controls.append(ft.Text(
+                f"Rilevati {n} terremoti con {e} connessioni nella regione {self._view._ddLuogo.value} nel mese di {self._view._ddMese.value}"))
         self._view._btnTempo.disabled = False
         self._view._btnStaz.disabled = False
         self._view._btnErr.disabled = False
@@ -110,9 +100,9 @@ class Controller:
         pass
 
     def handle_tempo(self, e):
-        # metti a posto distanza
+
         distanza, frequenza = self._model.analisiTemporale(self._view._ddMese.value, self._dizionarioAnalisiTemp)
-        # distanza puo essere sia un numero che un dizionario in base all'input del Flet
+
         if frequenza == 0:
             self._view.create_alert(f"Non sono avvenuti terremoti in questo periodo nella zona selezionata")
             return
@@ -123,13 +113,22 @@ class Controller:
                 f"Nel mese di {self._view._ddMese.value} nella zona {self._view._ddLuogo.value} si è verificato 1 terremoto ogni {round(distanza, 2)} giorni a distanza media di {round(frequenza, 2)} ore"))
 
         else:
-            pass
-            # per ogni chiave di "distanza"
-            # visualizzo la frequenza in cui sono avvenuti nel mondo
-            # e per ogni zona mostro i dettagli sulla distanza media tra una zona e
-            # l'altra self._view._txtResult2.controls.append(
-            # ft.Text( f"Nel mese di {self._view._ddMese.value} nella zona {CHIAVE} si è verificato 1 terremoto ogni
-            # {round(VALORE, 2)} giorni a distanza media di {round(frequenza, 2)} ore"))
+            self._view._txtResult2.controls.append(ft.Text(
+                f"Nel mese di {self._view._ddMese.value} nell mondo si è verificato un terremoto ogni {round((frequenza*60), 2)} minuti"))
+
+            for key in distanza:
+                if distanza[key] == 0:
+                    self._view._txtResult2.controls.append(
+                        ft.Text(
+                            f"Nella zona {key} non sono stati registrati terremoti nel mese di {self._view._ddMese.value}"))
+                elif distanza[key] == -1:
+                    self._view._txtResult2.controls.append(
+                        ft.Text(
+                            f"Nella zona {key} si è verificato 1 solo terremoto nel mese di {self._view._ddMese.value}"))
+                else:
+                    self._view._txtResult2.controls.append(
+                        ft.Text(f"Nella zona {key} si è verificato 1 terremoto ogni"
+                                f" {round(distanza[key], 2)} giorni"))
 
         self._view._txtResult2.controls.append(ft.Text(f""))
         self._view.update_page()
@@ -231,10 +230,12 @@ class Controller:
         for nodo, conteggio in elenco.items():
             if conteggio == 1:
                 self._view._txtResult3.controls.append(
-                    ft.Text(f"1 terremoto intorno a {nodo} {round((conteggio) / ((sr ** 2) * 3.14), 4)} terremoti/km^2"))
+                    ft.Text(
+                        f"{nodo}: 1 terremoto nell'area selezionate: registrati {round((conteggio) / ((sr ** 2) * 3.14), 4)} terremoti/km^2"))
             else:
                 self._view._txtResult3.controls.append(
-                    ft.Text(f"{conteggio} terremoti intorno a {nodo} {round((conteggio) / ((sr ** 2) * 3.14), 4)} terremoti/km^2"))
+                    ft.Text(
+                        f"{nodo}: {conteggio} terremoti nell'area selezionata: registrati {round((conteggio) / ((sr ** 2) * 3.14), 4)} terremoti/km^2"))
 
         self._view._txtResult3.controls.append(ft.Text(f""))
         self._view.update_page()
@@ -271,10 +272,3 @@ class Controller:
         if value is None:
             return
         return f"%{value}%"
-
-    def nonPossoAnalizzare(self, lista):
-        if len(lista) == 0:
-            self._view._txtResult2.controls.append(ft.Text(f"La regione selezionata non ha terremoti da analizzare"))
-            self._view.update_page()
-            return True
-        return False
