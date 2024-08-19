@@ -39,6 +39,7 @@ class Model:
         end_time = time.time()  # Fine della misurazione
 
         elapsed_time = end_time - start_time
+
         print(f"Tempo creazione grafo : {elapsed_time:.5f} secondi")
 
     def analisiTemporale(self, mese, diz):
