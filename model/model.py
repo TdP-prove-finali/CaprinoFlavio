@@ -11,21 +11,24 @@ class Model:
         self._grafo = nx.Graph()
         pass
 
-    def creaGrafo(self,zona,mese,soglia):
+    def creaGrafo(self, zona, mese, soglia):
+
+        print("inizio grafo")
+
+        start_time = time.time()  # Inizio della misurazione
+
         self._grafo.clear()
         if zona is None or zona.strip() == "":
             self._terremoti = DAO.getTerremoti(mese)
         else:
-            self._terremoti = DAO.getTerremotiZona(zona,mese)
+            self._terremoti = DAO.getTerremotiZona(zona, mese)
 
         self._grafo.add_nodes_from(self._terremoti)
         print(len(self._grafo.nodes))
         nodi = list(self._grafo.nodes)
         num_nodi = len(nodi)
-        start_time = time.time()  # Inizio della misurazione
 
         for i in range(num_nodi):
-            print(i)
             n1 = nodi[i]
             for j in range(i + 1, num_nodi):
                 n2 = nodi[j]
@@ -36,19 +39,19 @@ class Model:
         end_time = time.time()  # Fine della misurazione
 
         elapsed_time = end_time - start_time
-        print(f"Tempo doppio unico : {elapsed_time:.2f} secondi")
+        print(f"Tempo creazione grafo : {elapsed_time:.5f} secondi")
 
-
-
-    def analisiTemporale(self,mese,diz):
+    def analisiTemporale(self, mese, diz):
         if len(self._grafo.nodes) == 0:
-            return 0,0
+            return 0, 0
         if diz == {}:
             return self.analisiZonaSingola(mese)
         else:
-            return self.analisiZone(diz,mese)
+            return self.analisiZone(diz, mese)
 
-    def analisiZonaSingola(self,mese):
+    def analisiZonaSingola(self, mese):
+        start_time = time.time()  # Inizio della misurazione
+
         giorni = self.contaGiorni(mese)
         self._terremotiTemp = []
         for t in self._grafo.nodes:
@@ -56,38 +59,58 @@ class Model:
         self._terremotiTemp = sorted(self._terremotiTemp)
         differenze = [self._terremotiTemp[i] - self._terremotiTemp[i - 1] for i in range(1, len(self._terremotiTemp))]
         media_differenze = sum(differenze) / len(differenze)
+
+        end_time = time.time()  # Fine della misurazione
+        elapsed_time = end_time - start_time
+        print(f"Tempo analisi temporale : {elapsed_time:.5f} secondi")
         return media_differenze, giorni * 24 / len(differenze)
 
-    def analisiZone(self,diz,mese):
+    def analisiZone(self, diz, mese):
+        start_time = time.time()  # Inizio della misurazione
+
         for key in diz:
             self._terremotiTemp = []
-            terremoti = DAO.getTerremotiZona(self.convertiZona(key),self.convertiData(mese))
+            terremoti = DAO.getTerremotiZona(self.convertiZona(key), self.convertiData(mese))
             for t in terremoti:
                 self._terremotiTemp.append((datetime.strptime(t.time, "%Y-%m-%dT%H:%M:%S.%fZ")).day)
             self._terremotiTemp = sorted(self._terremotiTemp)
             if len(self._terremotiTemp) > 1:
-                differenze = [self._terremotiTemp[i] - self._terremotiTemp[i - 1] for i in range(1, len(self._terremotiTemp))]
+                differenze = [self._terremotiTemp[i] - self._terremotiTemp[i - 1] for i in
+                              range(1, len(self._terremotiTemp))]
                 media_differenze = sum(differenze) / len(differenze)
             else:
-                if len(self._terremotiTemp)==1:
+                if len(self._terremotiTemp) == 1:
                     media_differenze = -1
                 else:
                     media_differenze = 0
 
             diz[key] = media_differenze
         giorni = self.contaGiorni(mese)
-        return diz, giorni*24/(len(self._grafo.nodes)-1)
+
+        end_time = time.time()  # Fine della misurazione
+        elapsed_time = end_time - start_time
+        print(f"Tempo analisi temporale : {elapsed_time:.5f} secondi")
+        return diz, giorni * 24 / (len(self._grafo.nodes) - 1)
 
     def analisiStazioni(self):
+        start_time = time.time()  # Inizio della misurazione
+
         self._terremotiStaz = []
         for t in self._grafo.nodes:
             if t.nst is not None:
                 self._terremotiStaz.append((t.place, t.nst))
 
         self._terremotiStaz.sort(key=lambda x: x[1])
+
+        end_time = time.time()  # Fine della misurazione
+        elapsed_time = end_time - start_time
+        print(f"Tempo analisi stazioni : {elapsed_time:.5f} secondi")
+
         return self._terremotiStaz
 
     def analisiErrori(self):
+        start_time = time.time()  # Inizio della misurazione
+
         self._errh = []
         self._errd = []
         self._errm = []
@@ -112,40 +135,69 @@ class Model:
         self._errd.sort(key=lambda x: x[1], reverse=True)
         self._errm.sort(key=lambda x: x[1], reverse=True)
 
+        end_time = time.time()
+        elapsed_time = end_time - start_time
+        print(f"Tempo analisi errori : {elapsed_time:.5f} secondi")
+
+
         return self._errh, self._errd, self._errm
 
-    def trovaMagnitudo(self,sm):
+    def trovaMagnitudo(self, sm):
+        start_time = time.time()
+
         self._terremotiMag = []
         for n in self._grafo.nodes:
-            if n.mag <= (sm+0.5) and n.mag >= (sm-0.5):
-                if n.place is not None:
+            if n.mag <= (sm + 0.5) and n.mag >= (sm - 0.5):
+                if n.place is not None and n.place != "":
                     self._terremotiMag.append((n.place, n.mag))
                 else:
                     self._terremotiMag.append(("Zona non registrata", n.mag))
 
+        end_time = time.time()
+        elapsed_time = end_time - start_time
+        print(f"Tempo analisi magnitudo : {elapsed_time:.5f} secondi")
+
         return self._terremotiMag
 
     def trovaClassifica(self):
+        start_time = time.time()
+
         self._terremotiClassifica = []
         for n in self._grafo.nodes:
-            if n.place is not None:
-                self._terremotiClassifica.append((n.place,n.mag))
+            if n.place is not None and n.place != "":
+                self._terremotiClassifica.append((n.place, n.mag))
+            else:
+                self._terremotiClassifica.append(("Zona non registrata", n.mag))
+
         self._terremotiClassifica.sort(key=lambda x: x[1], reverse=True)
+
+        end_time = time.time()
+        elapsed_time = end_time - start_time
+        print(f"Tempo classifica: {elapsed_time:.5f} secondi")
+
         return self._terremotiClassifica
 
-    def trovaDensita(self,sr):
+    def trovaDensita(self, sr):
+        print("inizio ricorsione")
+        start_time = time.time()
         risultati = {}
         for nodo_sorgente in self._grafo.nodes:
             self._sol = set()
             parziale = set()
             self.ricorsione(nodo_sorgente, sr, parziale)
             risultati[nodo_sorgente.place] = len(self._sol)
+
+        end_time = time.time()
+        elapsed_time = end_time - start_time
+        print(f"Tempo analisi densità : {elapsed_time:.5f} secondi")
+
         return dict(sorted(risultati.items(), key=lambda item: item[1], reverse=True))
 
     def ricorsione(self, nodo_sorgente, soglia_ricorsione, parziale):
         for nodo in self._grafo.nodes:
             if nodo not in parziale:
-                distanza = geodesic((nodo_sorgente.latitude, nodo_sorgente.longitude), (nodo.latitude, nodo.longitude)).kilometers
+                distanza = geodesic((nodo_sorgente.latitude, nodo_sorgente.longitude),
+                                    (nodo.latitude, nodo.longitude)).kilometers
                 if distanza <= soglia_ricorsione:
                     parziale.add(nodo)
                     self.ricorsione(nodo, soglia_ricorsione, parziale)
@@ -155,9 +207,9 @@ class Model:
         return (len(self._grafo.nodes()), len(self._grafo.edges()))
 
     def contaGiorni(self, mese):
-        if mese =="Novembre" or mese =="Aprile" or mese == "Giugno" or mese == "Settembre":
+        if mese == "Novembre" or mese == "Aprile" or mese == "Giugno" or mese == "Settembre":
             return 30
-        if mese =="Febbbraio":
+        if mese == "Febbbraio":
             return 28
         else:
             return 31

@@ -41,6 +41,8 @@ class Controller:
         self._view._btnDensita.disabled = True
         self._view._ddClass.options = []
         self._view._ddMag.options = []
+
+        self._view._txtSRicorsione.value = ""
         self._view.update_page()
 
     def handle_graph(self, e):
@@ -87,6 +89,7 @@ class Controller:
         self._view._ddClass.options = []
         self._view._ddMag.options = []
 
+
         for i in range(len(self._model._grafo.nodes)):
             if i > 1:
                 self._view._ddClass.options.append(ft.dropdown.Option(str(i + 1)))
@@ -109,12 +112,16 @@ class Controller:
         self._view._txtResult2.controls.append(ft.Text(f"-> Analisi temporale:"))
 
         if self._dizionarioAnalisiTemp == {}:
-            self._view._txtResult2.controls.append(ft.Text(
-                f"Nel mese di {self._view._ddMese.value} nella zona {self._view._ddLuogo.value} si è verificato 1 terremoto ogni {round(distanza, 2)} giorni a distanza media di {round(frequenza, 2)} ore"))
+            if distanza<1:
+                self._view._txtResult2.controls.append(ft.Text(
+                    f"Nel mese di {self._view._ddMese.value} nella zona {self._view._ddLuogo.value} si è verificato 1 terremoto ogni {round((distanza*24), 2)} ore a distanza media di {round(frequenza, 2)} ore"))
+            else:
+                self._view._txtResult2.controls.append(ft.Text(
+                    f"Nel mese di {self._view._ddMese.value} nella zona {self._view._ddLuogo.value} si è verificato 1 terremoto ogni {round(distanza, 2)} giorni a distanza media di {round(frequenza, 2)} ore"))
 
         else:
             self._view._txtResult2.controls.append(ft.Text(
-                f"Nel mese di {self._view._ddMese.value} nell mondo si è verificato un terremoto ogni {round((frequenza*60), 2)} minuti"))
+                f"Nel mese di {self._view._ddMese.value} nel mondo si è verificato un terremoto ogni {round((frequenza*60), 2)} minuti"))
 
             for key in distanza:
                 if distanza[key] == 0:
@@ -126,9 +133,14 @@ class Controller:
                         ft.Text(
                             f"Nella zona {key} si è verificato 1 solo terremoto nel mese di {self._view._ddMese.value}"))
                 else:
-                    self._view._txtResult2.controls.append(
-                        ft.Text(f"Nella zona {key} si è verificato 1 terremoto ogni"
-                                f" {round(distanza[key], 2)} giorni"))
+                    if distanza[key] < 1:
+                        self._view._txtResult2.controls.append(
+                            ft.Text(f"Nella zona {key} si è verificato 1 terremoto ogni"
+                                    f" {round((distanza[key] * 24), 2)} ore nel mese di {self._view._ddMese.value}"))
+                    else:
+                        self._view._txtResult2.controls.append(
+                            ft.Text(f"Nella zona {key} si è verificato 1 terremoto ogni"
+                                f" {round(distanza[key], 2)} giorni nel mese di {self._view._ddMese.value}"))
 
         self._view._txtResult2.controls.append(ft.Text(f""))
         self._view.update_page()
@@ -141,7 +153,10 @@ class Controller:
             return
         self._view._txtResult2.controls.append(ft.Text(f"-> Analisi stazioni installate:"))
         for l in lista:
-            self._view._txtResult2.controls.append(ft.Text(f"Terremoto a {l[0]} rilevato da {int(l[1])} stazioni"))
+            if l[0] is None or l[0] == "":
+                self._view._txtResult2.controls.append(ft.Text(f"Terremoto a Zona non registrata rilevato da {int(l[1])} stazioni"))
+            else:
+                self._view._txtResult2.controls.append(ft.Text(f"Terremoto a {l[0]} rilevato da {int(l[1])} stazioni"))
         self._view._txtResult2.controls.append(ft.Text(f""))
         self._view.update_page()
         pass
@@ -152,15 +167,31 @@ class Controller:
             self._view.create_alert(f"Nessuna stazione ha rilevato terremoti in questo periodo nella zona selezionata")
             return
         self._view._txtResult2.controls.append(ft.Text(f"-> Analisi efficacia stazioni:"))
+
         self._view._txtResult2.controls.append(ft.Text(f"-> Horizontal error:"))
         for l in listah:
-            self._view._txtResult2.controls.append(ft.Text(f"Stazioni a {l[0]}, errore: {l[1]}"))
+            if l[0] is None or l[0] == "":
+                self._view._txtResult2.controls.append(
+                    ft.Text(f"Stazioni a Zona non registrata, errore: {round(l[1], 2)}"))
+            else:
+                self._view._txtResult2.controls.append(ft.Text(f"Stazioni a {l[0]}, errore: {round(l[1], 2)}"))
+
         self._view._txtResult2.controls.append(ft.Text(f"-> Depth error:"))
         for l in listad:
-            self._view._txtResult2.controls.append(ft.Text(f"Stazioni a {l[0]}, errore: {l[1]}"))
+            if l[0] is None or l[0] == "":
+                self._view._txtResult2.controls.append(
+                    ft.Text(f"Stazioni a Zona non registrata, errore: {round(l[1], 2)}"))
+            else:
+                self._view._txtResult2.controls.append(ft.Text(f"Stazioni a {l[0]}, errore: {round(l[1], 2)}"))
+
         self._view._txtResult2.controls.append(ft.Text(f"-> Mag error:"))
         for l in listam:
-            self._view._txtResult2.controls.append(ft.Text(f"Stazioni a {l[0]}, errore: {l[1]}"))
+            if l[0] is None or l[0] == "":
+                self._view._txtResult2.controls.append(
+                    ft.Text(f"Stazioni a Zona non registrata, errore: {round(l[1], 2)}"))
+            else:
+                self._view._txtResult2.controls.append(ft.Text(f"Stazioni a {l[0]}, errore: {round(l[1], 2)}"))
+
         self._view._txtResult2.controls.append(ft.Text(f""))
         self._view.update_page()
         pass
@@ -177,7 +208,10 @@ class Controller:
         self._view._txtResult2.controls.append(ft.Text(
             f"-> Ricerca luoghi in cui sono avvenuti terremoti con magnitudo vicina a {self._view._ddMag.value}"))
         lista = self._model.trovaMagnitudo(float(self._view._ddMag.value))
-        self._view._txtResult2.controls.append(ft.Text(f"Trovati {len(lista)} terremoti"))
+        if len(lista) == 1:
+            self._view._txtResult2.controls.append(ft.Text(f"Trovato {len(lista)} terremoto"))
+        else:
+            self._view._txtResult2.controls.append(ft.Text(f"Trovati {len(lista)} terremoti"))
         for l in lista:
             self._view._txtResult2.controls.append(ft.Text(f"Terremoto a {l[0]} con magnitudo: {l[1]}"))
 
@@ -186,6 +220,10 @@ class Controller:
         pass
 
     def handle_class(self, e):
+        if len(self._model._grafo.nodes) < 3:
+            self._view.create_alert(f"Non è possibile calcolare una classifica con così troppi pochi terremoti")
+            return
+
         if len(self._model._grafo.nodes) == 0:
             self._view.create_alert(f"Non sono avvenuti terremoti in questo periodo nella zona selezionata")
             return
@@ -196,9 +234,13 @@ class Controller:
 
         lista = self._model.trovaClassifica()
 
-        self._view._txtResult2.controls.append(
-            ft.Text(f"-> Classifica dei {self._view._ddClass.value} terremoti più forti"))
         num = int(self._view._ddClass.value)
+        if num == 8:
+            self._view._txtResult2.controls.append(
+                ft.Text(f"-> Classifica degli {self._view._ddClass.value} terremoti più forti"))
+        else:
+            self._view._txtResult2.controls.append(
+                ft.Text(f"-> Classifica dei {self._view._ddClass.value} terremoti più forti"))
 
         for l in lista[:num]:
             self._view._txtResult2.controls.append(ft.Text(f"{l[0]}: {l[1]}"))
@@ -209,6 +251,7 @@ class Controller:
             self._view._txtResult2.controls.append(ft.Text(f"{l[0]}: {l[1]}"))
         self._view._txtResult2.controls.append(ft.Text(f""))
         self._view.update_page()
+
 
     def handle_clear(self, e):
         self._view._txtResult2.controls = None
@@ -225,13 +268,18 @@ class Controller:
             self._view.create_alert("Inserisci un valore numerico per la soglia")
             return
         sr = float(self._view._txtSRicorsione.value)
+
+        if len(self._model._grafo.nodes) == 0:
+            self._view.create_alert(f"Non sono avvenuti terremoti in questo periodo nella zona selezionata")
+            return
+
         elenco = self._model.trovaDensita(sr)
         self._view._txtResult3.controls.append(ft.Text(f"->Analisi densità nel raggio di {sr} km"))
         for nodo, conteggio in elenco.items():
             if conteggio == 1:
                 self._view._txtResult3.controls.append(
                     ft.Text(
-                        f"{nodo}: 1 terremoto nell'area selezionate: registrati {round((conteggio) / ((sr ** 2) * 3.14), 4)} terremoti/km^2"))
+                        f"{nodo}: 1 terremoto nell'area selezionata: registrati {round((conteggio) / ((sr ** 2) * 3.14), 4)} terremoti/km^2"))
             else:
                 self._view._txtResult3.controls.append(
                     ft.Text(
