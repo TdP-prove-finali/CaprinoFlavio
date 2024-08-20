@@ -88,7 +88,7 @@ class Controller:
         self._view._btnDensita.disabled = False
         self._view._ddClass.options = []
         self._view._ddMag.options = []
-
+        self._view._ddClass.value = None
 
         for i in range(len(self._model._grafo.nodes)):
             if i > 1:
@@ -245,11 +245,17 @@ class Controller:
         for l in lista[:num]:
             self._view._txtResult2.controls.append(ft.Text(f"{l[0]}: {l[1]}"))
 
-        self._view._txtResult2.controls.append(
-            ft.Text(f"-> Classifica dei {self._view._ddClass.value} terremoti più deboli"))
+        if num == 8:
+            self._view._txtResult2.controls.append(
+                ft.Text(f"-> Classifica degli {self._view._ddClass.value} terremoti più deboli"))
+        else:
+            self._view._txtResult2.controls.append(
+                ft.Text(f"-> Classifica dei {self._view._ddClass.value} terremoti più deboli"))
+
         for l in lista[-num:]:
             self._view._txtResult2.controls.append(ft.Text(f"{l[0]}: {l[1]}"))
         self._view._txtResult2.controls.append(ft.Text(f""))
+
         self._view.update_page()
 
 
